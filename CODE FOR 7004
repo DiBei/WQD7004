@@ -1,0 +1,52 @@
+library(caret)
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+library(tidyr)
+library(caTools)
+library(e1071)
+library(MASS)
+
+df <- read.csv("cbb.csv", header = TRUE, sep = ",")
+str(df)
+
+
+df$year[df$year< 0] <- mean(df$year, na.rm = T)
+
+
+df['WinRate'] <- df['W'] / df['G']
+ 
+df <- subset(df, select = -c(W,G))
+
+set.seed(42)
+split = sample.split(df$WinRate, SplitRatio = 0.8)
+training_set = subset(df, split == TRUE)
+test_set = subset(df, split == FALSE)
+
+regressor = lm(WinRate~ADJOE+ADJDE+BARTHAG+EFG_O+EFG_D+TOR+TORD+ORB+DRB+FTR+FTRD, 
+               data = training_set)
+
+summary(regressor)
+# Predicting the Test set results
+y_pred = predict(regressor, newdata = test_set)
+
+# RMSE of the model
+RMSE(y_pred, test_set$WinRate)
+R2(y_pred, test_set$WinRate)
+
+svm_model = svm(WinRate~., data = training_set)
+
+pred = predict(svm_model, df)
+
+RMSE(training_set$WinRate, pred)
+R2(training_set$WinRate, pred, form = "traditional")
+x=1:length(training_set$WinRate)
+plot(x, training_set$WinRate, pch=18, col="red")
+x=1:length(pred)
+lines(x, pred, lwd="1", col="blue")
+
+svm_model = svm(WinRate~ADJOE+ADJDE+BARTHAG+EFG_O+EFG_D+TOR+TORD+ORB+DRB+FTR+FTRD, 
+, data = training_set)
+pred = predict(svm_model, df)
+
+tab = table(predicted = pred ,actual = training_set$WinRate)
